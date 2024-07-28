@@ -1,0 +1,80 @@
+﻿@model asp__example.Models.Friend
+
+@{
+    ViewData["Title"] = "Edit";
+}
+
+<h1>Edit</h1>
+
+<h4>Friend</h4>
+<hr />
+<div class="row">
+    <div class="col-md-4">
+        <form asp-action="Edit" method="post" enctype="multipart/form-data">
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+            <input type="hidden" asp-for="Id" />
+            <div class="form-group">
+                <label asp-for="FirstName" class="control-label"></label>
+                <input asp-for="FirstName" class="form-control" />
+                <span asp-validation-for="FirstName" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="LastName" class="control-label"></label>
+                <input asp-for="LastName" class="form-control" />
+                <span asp-validation-for="LastName" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="EmailAddress" class="control-label"></label>
+                <input asp-for="EmailAddress" class="form-control" />
+                <span asp-validation-for="EmailAddress" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="Phone" class="control-label"></label>
+                <input asp-for="Phone" class="form-control" />
+                <span asp-validation-for="Phone" class="text-danger"></span>
+            </div>
+            <div class="p-1 row">
+                <h4>לחץ על תמונה כדי להסיר</h4>
+                <input type="hidden" id="imagesToRemove" name="ImagesToRemove" value="" />
+                @foreach (var img in Model.Images)
+                {
+                    <div class="col-4 p-1">
+                        <img class="d-block w-100 removable-image"
+                             src="data:image/png;base64,@Convert.ToBase64String(img.Img)"
+                             data-id="@img.Id" />
+                    </div>
+                }
+            </div>
+
+            <div class="form-group">
+                <label asp-for="setImges" class="control-label"></label>
+                <input asp-for="setImges" class="form-control" type="file" multiple />
+            </div>
+            <div class="form-group">
+                <input type="submit" value="Save" class="btn btn-primary" />
+            </div>
+        </form>
+    </div>
+</div>
+
+<div>
+    <a asp-action="Index">Back to List</a>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+        <script>
+            document.querySelectorAll('.removable-image').forEach(img => {
+                img.addEventListener('click', function () {
+                    const id = this.getAttribute('data-id');
+                    if (id) {
+                        const input = document.getElementById('imagesToRemove');
+                        input.value += id + ",";
+                        this.parentElement.remove(); // Remove the image from the UI
+                    }
+                });
+            });
+        </script>
+    }
+}
