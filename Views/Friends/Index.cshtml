@@ -13,6 +13,12 @@
     <thead>
         <tr>
             <th>
+                #
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Id)
+            </th>
+            <th>
                 @Html.DisplayNameFor(model => model.FirstName)
             </th>
             <th>
@@ -32,7 +38,14 @@
     </thead>
     <tbody>
 @foreach (var item in Model) {
-        <tr>
+            <tr class="align-middle">
+                <td>
+                    <img src="data:image/png;base64,@Convert.ToBase64String(item.Avatar)" class="rounded-circle" style="width: 50px;"
+                         alt="Avatar" />
+                </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.Id)
+            </td>
             <td>
                 @Html.DisplayFor(modelItem => item.FirstName)
             </td>

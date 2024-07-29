@@ -50,10 +50,15 @@ namespace asp__example.Controllers
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("Id,FirstName,LastName,EmailAddress,Phone, setImges")]  Friend friend)
+        public async Task<IActionResult> Create([Bind("Id,FirstName,LastName,EmailAddress,Phone,setAvatar , setImges")]  Friend friend)
         {
             if (ModelState.IsValid)
             {
+                if(friend.Avatar == null)
+                {
+                    var path = Path.Combine(Directory.GetCurrentDirectory() + @"\wwwroot\images\default_avatar.png");
+                    friend.Avatar = System.IO.File.ReadAllBytes(path);
+                }
                 _context.Add(friend);
                 await _context.SaveChangesAsync();
                 return RedirectToAction(nameof(Index));
@@ -69,7 +74,6 @@ namespace asp__example.Controllers
                 return NotFound();
             }
 
-            //var friend = await _context.Friends.FindAsync(id);
             var friend = await _context.Friends.Include(f => f.Images).FirstOrDefaultAsync(f => f.Id == id);
             if (friend == null)
             {
@@ -83,34 +87,50 @@ namespace asp__example.Controllers
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("Id,FirstName,LastName,EmailAddress,Phone,Images")] Friend friend)
+        public async Task<IActionResult> Edit(int id, [Bind("Id,FirstName,LastName,EmailAddress,Phone,setImges")] Friend friend, string? imagesToRemove)
         {
-            if (id != friend.Id)
-            {
-                return NotFound();
-            }
-
+            if (id != friend.Id) return NotFound();
+            var original = _context.Friends.Include(f => f.Images).FirstOrDefault(f => f.Id == id);
             if (ModelState.IsValid)
             {
-                try
+                if (original != null)
                 {
-                    _context.Update(friend);
-                    await _context.SaveChangesAsync();
-                }
-                catch (DbUpdateConcurrencyException)
-                {
-                    if (!FriendExists(friend.Id))
+                    try
                     {
-                        return NotFound();
+                        original.FirstName = friend.FirstName;
+                        original.LastName = friend.LastName;
+                        original.Phone = friend.Phone;
+                        original.EmailAddress = friend.EmailAddress;
+
+                        if(!string.IsNullOrEmpty(imagesToRemove))
+                        {
+                            var idsToRemove = imagesToRemove.Split(",", StringSplitOptions.RemoveEmptyEntries)
+                                .Select(id => int.TryParse(id, out int result)  ? result : (int?)null)
+                                .Where(id => id.HasValue)
+                                .Select(id => id.Value)
+                                .ToList();
+                            original.Images = original.Images.Where(i => !idsToRemove.Contains(i.Id)).ToList();
+                        }
+                        if(friend.Images != null && friend.Images.Any()) original.Images.AddRange(friend.Images);
+                        _context.Update(original);
+                        await _context.SaveChangesAsync();
+                        return RedirectToAction(nameof(Index));
                     }
-                    else
+
+                    catch (DbUpdateConcurrencyException)
                     {
-                        throw;
+                        if (!FriendExists(original.Id))
+                        {
+                            return NotFound();
+                        }
+                        else
+                        {
+                            throw;
+                        }
                     }
                 }
-                return RedirectToAction(nameof(Index));
             }
-            return View(friend);
+            return View(original);
         }
 
         // GET: Friends/Delete/5

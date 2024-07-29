@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel;
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Diagnostics.CodeAnalysis;
 
@@ -26,7 +27,20 @@ namespace asp__example.Models
         public string Phone { get; set; }
 
         [AllowNull, Display(Name ="תמונות")]
-        public List<Image>Images { get; set; }
+        public List<Image> Images { get; set; } = new List<Image>();
+        [AllowNull]
+        public byte[]? Avatar { get; set; }
+
+        [NotMapped, Display(Name = "הוספת תמונה")]
+        public IFormFile? setAvatar
+        {
+            get => null;
+            set
+            {
+                if (value == null) return;
+                AddImage(value, true);
+            }
+        }
 
         [NotMapped, Display(Name = "הוספת תמונה")]
         public IFormFile? setImg
@@ -35,10 +49,9 @@ namespace asp__example.Models
             set
             {
                 if (value == null) return;
-                AddImage(value);
+                AddImage(value, false);
             }
         }
-
 
         [NotMapped, Display(Name = "הוספת תמונות")]
         public IFormFile[]? setImges
@@ -47,27 +60,24 @@ namespace asp__example.Models
             set
             {
                 if (value == null) return;          
-                foreach (var item in value) AddImage(item);
+                foreach (var item in value) AddImage(item, false);
             }
         }
 
-
-        public void AddImage(byte[] img)
+        public void AddImage(byte[] img, bool isAvatar)
         {
-            if(Images == null)
-            {
-                Images = new List<Image>();   
-            }
-            Images.Add(new Image { Img = img, Friend = this });
+            if (isAvatar) Avatar = img;
+            else Images.Add(new Image { Img = img, Friend = this });
         }
 
-        public void AddImage(IFormFile img)
+        public void AddImage(IFormFile img, bool isAvatar)
         {
             if(img != null)
             {
                 MemoryStream memory = new MemoryStream();
                 img.CopyTo(memory);
-                AddImage(memory.ToArray());
+                if(isAvatar) Avatar = memory.ToArray();
+                else AddImage(memory.ToArray(), isAvatar);
             }
         }
     }
